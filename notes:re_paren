@@ -1,0 +1,77 @@
+#!/bin/bash
+
+re_paren='\('                # start with an open paren
+
+################## block 1 ##################
+re_paren+='('                # extra braces needed to extract correctly all the block
+
+re_paren+='('
+re_paren+='\\.'              # followed by an escaped character
+re_paren+='|'
+re_paren+='[^()|\\]'         # or any character that's not a | or ( or ) or \
+re_paren+=')*'
+
+re_paren+=')'                # extra braces needed to extract correctly all the block
+################## block 1 ##################
+
+
+
+################## block 2 ##################
+re_paren+='('                # extra braces needed to extract correctly all the block
+re_paren+='('
+re_paren+='\|'               # a |
+
+re_paren+='('                # same block as above
+re_paren+='('
+re_paren+='\\.'
+re_paren+='|'
+re_paren+='[^()|\\]'
+re_paren+=')*'
+re_paren+=')'
+
+re_paren+=')*'
+re_paren+=')'                # extra braces needed to extract correctly all the block
+################## block 2 ##################
+
+re_paren+='\)'               # closing paren
+
+re_paren+='([+*?])?'         # quantifier
+
+
+printf "without underscores: re_paren='%s'\n" "$re_paren"
+
+
+
+
+
+
+
+
+
+re_paren='\(_'
+
+re_paren+='('
+re_paren+='('
+re_paren+='\\_._'            # 2 underscores here
+re_paren+='|'
+re_paren+='[^()|\\]'         # NOT here!  (must match CLASS and PAREN)
+re_paren+=')*'
+re_paren+=')'
+
+re_paren+='('
+re_paren+='('
+re_paren+='\|_'              # here
+re_paren+='('
+re_paren+='('
+re_paren+='\\_._'            # and here
+re_paren+='|'
+re_paren+='[^()|\\]_'        # and NOT here
+re_paren+=')*'
+re_paren+=')'
+re_paren+=')*'
+re_paren+=')'
+
+re_paren+='\)_'              # here
+
+re_paren+='([+*?]_)?'        # and finally here
+printf "   with underscores: re_paren='%s'\n" "$re_paren"

@@ -1,0 +1,74 @@
+#!/bin/bash
+
+# supported so far:
+# [a-z] (a|b|c) x* x+ x?
+# escapes work correctly
+
+# roadmap, sorted by how much i care:
+# [^a-z]
+# ^ $
+# better handling of the quantifiers
+# produce more than 1 match when possible
+# x{a,b}
+# [[:class:]]
+# \1 \2 \3...
+# \d \D \w \W etc...
+
+remove_underscores () {
+  return= len=${#1}
+  for (( i = 0; i < len; i+=2 )); do return+=${1:i:1}; done
+}
+
+print_match () {
+  local var=$1 pieces
+  # find next underscore, split
+  while [[ $var =~ ([^_]*)_(.*) ]]; do
+    var=${BASH_REMATCH[2]} pieces+=("${BASH_REMATCH[1]}")
+  done
+  local numpieces=${#pieces[@]} i
+  for (( i = 0; i < numpieces; i++ )) do
+    case ${pieces[i]} in
+      ?) if [[ escaped -ne 0 || ${pieces[i]} != \\ ]]; then
+           printf %s "${pieces[i]}"
+           escaped=0
+           [[ ${pieces[i+1]} = [+*?] ]] && ((i++))
+         else escaped=1
+         fi ;;
+    CLASS*) printf %s "${class[${pieces[i]:5}]:0:1}" ; escaped=0 ;;
+    PAREN*) print_match "${paren[${pieces[i]:5}]}" ; escaped=0 ;;
+    esac
+  done
+}
+
+while IFS= read -rep '> ' tmp; do
+  history -s -- "$tmp"
+
+  # insert an underscore everywhere to separate the original
+  # from the parts we replaced
+  len=${#tmp} var=
+  for (( i = 0; i < len; i++ )); do var+=${tmp:i:1}_; done
+
+  re_class='\[_(\^_)?((]_)?(\\_]_|[^]])*)]_([+*?]_)?'
+  re_paren='\(_((\\_._|[^()|\\])*)((\|_((\\_._|[^()|\\])*))*)\)_([+*?]_)?'
+
+  while [[ $var =~ $re_class(.*) ]]; do
+    class+=("${BASH_REMATCH[2]}")
+    # todo
+    #class_count+=("${BASH_REMATCH[5]}")
+    #[[ ${BASH_REMATCH[1]} ]] && inverted+=(1) || inverted+=(0)
+    var=${var%"$BASH_REMATCH"}CLASS$((${#class[@]}-1))_${BASH_REMATCH[-1]}
+  done
+  while [[ $var =~ $re_paren(.*) ]]; do
+    paren+=("${BASH_REMATCH[1]}")
+    # todo
+    #paren_count+=("${BASH_REMATCH[2]}")
+    var=${var%"$BASH_REMATCH"}PAREN$((${#paren[@]}-1))_${BASH_REMATCH[-1]}
+  done
+
+  for elem in "${!class[@]}"; do
+    remove_underscores "${class[elem]}"; class[elem]=$return
+  done
+
+  print_match "$var"
+  echo
+done
