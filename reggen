@@ -40,16 +40,16 @@ print_match () {
   done
 }
 
+re_class='\[_(\^_)?((]_)?(\\_]_|[^]])*)]_([+*?]_)?'
+re_paren='\(_((\\_._|[^()|\\])*)((\|_((\\_._|[^()|\\])*))*)\)_([+*?]_)?'
+
 while IFS= read -rep '> ' tmp; do
   history -s -- "$tmp"
 
   # insert an underscore everywhere to separate the original
   # from the parts we replaced
-  len=${#tmp} var=
+  len=${#tmp} var= class=() paren=()
   for (( i = 0; i < len; i++ )); do var+=${tmp:i:1}_; done
-
-  re_class='\[_(\^_)?((]_)?(\\_]_|[^]])*)]_([+*?]_)?'
-  re_paren='\(_((\\_._|[^()|\\])*)((\|_((\\_._|[^()|\\])*))*)\)_([+*?]_)?'
 
   while [[ $var =~ $re_class(.*) ]]; do
     class+=("${BASH_REMATCH[2]}")
