@@ -34,13 +34,13 @@ print_match () {
            [[ ${pieces[i+1]} = [+*?] ]] && ((i++))
          else escaped=1
          fi ;;
-    CLASS*) printf %s "${class[${pieces[i]:5}]:0:1}" ; escaped=0 ;;
+    CLASS*) printf %s "${class[${pieces[i]:5}]: -1}" ; escaped=0 ;;
     PAREN*) print_match "${paren[${pieces[i]:5}]}" ; escaped=0 ;;
     esac
   done
 }
 
-re_class='\[_(\^_)?((]_)?(\\_]_|[^]])*)]_([+*?]_)?'
+re_class='\[_(\^_)?((]_)?(\\_._|[^]\\])*)]_([+*?]_)?'
 re_paren='\(_((\\_._|[^()|\\])*)((\|_((\\_._|[^()|\\])*))*)\)_([+*?]_)?'
 
 while IFS= read -rep '> ' tmp; do
